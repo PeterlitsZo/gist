@@ -1,0 +1,69 @@
+\documentclass[utf8,a4paper,nofonts,9pt]{ctexbook}
+
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage[many]{tcolorbox}
+\usepackage[left=0.65in, right=0.65in, top=0.95in, bottom=0.95in]{geometry}
+\usepackage{enumitem}
+\setlist[1]{
+    leftmargin=2em,
+    labelsep=0.25em,
+    labelwidth=0.72em,
+    listparindent=2em,
+    align=left,
+    itemsep=-.1em,
+}
+\usepackage{src/package/Listings}
+
+\NewDocumentCommand\TODO{m}{\footnote{\textcolor{red}{TODO: #1}}}
+
+\def\dif{\mathop{}\!\mathrm{d}}
+
+\newtcolorbox{exampleBox}{
+    sharpish corners, % better drop shadow
+    boxrule = 0pt,
+    toprule = 4.5pt, % top rule weight
+    enhanced,
+    fuzzy shadow = {0pt}{-2pt}{-0.5pt}{0.5pt}{black!35} % {xshift}{yshift}{offset}{step}{options} 
+}
+
+\setCJKmainfont[Path=../fonts/,BoldFont=SourceHanSerifCN-Bold.otf,ItalicFont=SourceHanSerifCN-Bold.otf]{SourceHanSerifCN-Regular.otf}
+\setCJKsansfont[Path=../fonts/,BoldFont=SourceHanSansCN-Bold.otf]{SourceHanSansCN-Regular.otf}
+\setCJKmonofont[Path=../fonts/]{SourceHanSansCN-Regular.otf}
+
+\begin{document}
+
+\underline{问题} 对于一个大数据集，比如 256 TiB 的数据集，我们如何使用有限的内存，并且在受限环境（同时读写的文件数受限，能够产生的文件数受限）中完成乱序读取？
+
+\underline{解} 我们首先可以假设我们拥有无限大小的内存，这个时候一个解法就是将数据集加载到内存中，然后使用 $\mathcal{O}(n)$ 的算法打乱，然后读取。
+
+但是我们没有无限大小的内存。后续我们假设应用能使用的内存大小为 16 GiB（即我们如果分批读取的话，需要读取 $16 \times 2^{10}$ 次）。一种解法就是我们可以生成 $16 \times 2^{10}$ 个文件，每个文件的大小为 16 GiB，我们通过如下的算法生成：
+
+\begin{itemize}
+    \item 流式读取数据集。
+    \item 对于每个记录而言，我们生成一个随机值，并对 $16 \times 2^{10}$ 取模，结果记为 $i$。
+    \item 如果记录对应随机值为 $i$，那么将记录写入到第 $i$ 个文件中。
+\end{itemize}
+
+当我们流式处理完这个数据集后，我们得到了很多文件，每个文件都可以加载到内存中，同时每个文件都是对整个数据集的抽样（即我们可以说对于某个文件而言，它的每个记录在抽样前均匀随机地位于大数据集之中）。
+这个时候，随机读取大数据集，等效于：
+
+\begin{itemize}
+    \item 顺序遍历所有文件。
+    \item 对于每个文件，我们在读取前，需要先加载在内存中并打乱。然后读取打乱后的记录。
+\end{itemize}
+
+但是受到文件系统所限，我们无法让 opened FD 数量过大。我们假设我们能接收的 opened FD 数量为 256。即如果我们打开 256 个文件，每个文件写入 16 GiB 的话，我们一批即可写入 4 TiB，最终我们需要写入 64 批。
+我们可以先暂时放开一点要求，即我们能接受文件的记录不是均匀地位于整个大数据中，而是只要位于一个足够大的区间内即可。那么我们可以：
+
+\begin{itemize}
+    \item 在逻辑上将大数据集划分为多个区间。这里我们划分为 64 个区间，每个区间大小 4 TiB。
+    \item 对于每个区间，我们维护 256 个 opened FD。
+    \item 和之前的逻辑一样，我们将区间的记录随机地打散到多个文件中。
+\end{itemize}
+
+这样，我们能在受限的 opened FD 约束下完成需求。
+
+\end{document}
