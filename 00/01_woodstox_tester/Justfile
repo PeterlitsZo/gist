@@ -1,0 +1,6 @@
+build:
+    mvn compile
+    mvn package
+
+run:
+    java -jar target/woodstox_tester-1.0-SNAPSHOT.jar
