@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc [
+  <!ENTITY bar SYSTEM "bar.xml">
+]>
+<wrapper>
+    &bar;
+</wrapper>
