@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<property>
+    <name>dfs.datanode.data.dir</name>
+    <value>/dn1/data,/dn3/data,/dn4/data,/dn5/data,/dn6/data,/dn7/data,/dn8/data</value>
+</property>

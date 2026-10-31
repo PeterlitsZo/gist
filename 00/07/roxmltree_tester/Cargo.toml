@@ -1,0 +1,9 @@
+[package]
+name = "roxmltree_tester"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bumpalo = "3.19.0"
+env = "1.0.1"
+roxmltree = { git = "https://github.com/RazrFalcon/roxmltree.git", branch = "external-entities" }
