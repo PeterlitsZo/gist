@@ -1,0 +1,9 @@
+[package]
+name = "robinson_tester"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bumpalo = "3.19.0"
+env = "1.0.1"
+robinson = { git = "https://github.com/adamreichold/robinson.git", branch = "system-entities" }
